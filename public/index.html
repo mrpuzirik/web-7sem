@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Чат</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #e9eef0;
+    --surface: #ffffff;
+    --ink: #16252b;
+    --ink-soft: #5b6b72;
+    --rule: #c9d3d7;
+    --teal: #0b5d62;
+    --teal-ink: #ffffff;
+    --amber: #f2b94b;
+    --amber-wash: #fff1cf;
+    --amber-ink: #5a3d00;
+    --danger: #a8321f;
+    --font: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0f1a1e;
+      --surface: #182529;
+      --ink: #e6eef0;
+      --ink-soft: #8fa2a9;
+      --rule: #2b3d43;
+      --teal: #1c8a90;
+      --amber-wash: #3a2f10;
+      --amber-ink: #f5d98f;
+      --danger: #ff8d78;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+  .app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+  }
+
+  .side {
+    background: var(--surface);
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .side h1 {
+    margin: 0;
+    padding: 20px 20px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .me {
+    margin: 2px 20px 0;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+
+  .pulse {
+    margin: 20px;
+    padding: 16px;
+    background: var(--amber-wash);
+    color: var(--amber-ink);
+    border-radius: 14px;
+  }
+  .pulse-num {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .pulse-num small { font-size: 1rem; font-weight: 500; margin-left: 4px; }
+  .pulse-label { margin-top: 6px; font-size: 0.875rem; }
+  .bar {
+    margin-top: 12px;
+    height: 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--amber-ink) 18%, transparent);
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: var(--amber);
+    transform-origin: left center;
+    transform: scaleX(1);
+  }
+
+  .users-title {
+    padding: 0 20px 8px;
+    color: var(--ink-soft);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .users {
+    list-style: none;
+    margin: 0;
+    padding: 0 12px 16px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  .users li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+  .users li.me-row { background: var(--paper); font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #2fa36b; flex: none; }
+  .users .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .users .typing-mark { margin-left: auto; color: var(--ink-soft); font-size: 0.8rem; }
+
+  .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .stream {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px clamp(16px, 4vw, 48px) 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+  .empty {
+    margin: auto;
+    color: var(--ink-soft);
+    text-align: center;
+    max-width: 30ch;
+  }
+
+  .msg { max-width: min(560px, 82%); display: flex; flex-direction: column; }
+  .msg .bubble {
+    padding: 9px 13px;
+    border-radius: 16px 16px 16px 4px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .msg .meta { font-size: 0.78rem; color: var(--ink-soft); margin: 0 6px 3px; }
+  .msg .meta b { color: var(--ink); font-weight: 600; }
+  .msg.own { align-self: flex-end; align-items: flex-end; }
+  .msg.own .bubble {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--teal-ink);
+    border-radius: 16px 16px 4px 16px;
+  }
+
+  .msg.system {
+    align-self: center;
+    max-width: 100%;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .msg.auto {
+    align-self: stretch;
+    max-width: 100%;
+    background: var(--amber-wash);
+    color: var(--amber-ink);
+    border-left: 5px solid var(--amber);
+    border-radius: 6px 12px 12px 6px;
+    padding: 10px 14px;
+  }
+  .msg.auto .meta { margin: 0 0 2px; color: inherit; opacity: 0.8; }
+  .msg.auto .bubble { background: none; border: 0; padding: 0; font-weight: 500; }
+
+  .typing {
+    height: 22px;
+    padding: 0 clamp(16px, 4vw, 48px);
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+
+  .composer {
+    display: flex;
+    gap: 10px;
+    padding: 12px clamp(16px, 4vw, 48px) 20px;
+  }
+  .composer input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+  }
+  .btn {
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--teal);
+    color: var(--teal-ink);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .gate {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    z-index: 10;
+    padding: 20px;
+  }
+  .gate[hidden] { display: none; }
+  .gate form {
+    width: min(380px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    padding: 28px;
+  }
+  .gate h2 { margin: 0 0 4px; font-size: 1.5rem; letter-spacing: -0.01em; }
+  .gate p { margin: 0 0 18px; color: var(--ink-soft); }
+  .gate label { display: block; font-weight: 500; margin-bottom: 6px; }
+  .gate input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .gate .err { min-height: 1.4em; margin-bottom: 8px; color: var(--danger); font-size: 0.9rem; }
+  .gate .btn { width: 100%; border-radius: 10px; }
+
+  .conn {
+    position: fixed; top: 12px; right: 12px; z-index: 20;
+    background: var(--danger); color: #fff;
+    padding: 6px 12px; border-radius: 999px; font-size: 0.85rem;
+  }
+  .conn[hidden] { display: none; }
+
+  @media (max-width: 720px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .side { border-right: 0; border-bottom: 1px solid var(--rule); flex-direction: row; align-items: center; flex-wrap: wrap; }
+    .side h1 { padding: 12px 16px 0; font-size: 1.05rem; }
+    .me { margin: 0; padding: 12px 16px 0; }
+    .pulse { margin: 10px 16px 12px; padding: 10px 14px; flex: 1 1 100%; display: flex; align-items: center; gap: 14px; }
+    .pulse-num { font-size: 1.6rem; }
+    .pulse-label { display: none; }
+    .bar { flex: 1; margin: 0; }
+    .users-title, .users { display: none; }
+    .msg { max-width: 92%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stream { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="conn" id="conn" hidden>Немає зʼєднання з сервером — намагаюся відновити…</div>
+
+<div class="gate" id="gate">
+  <form id="joinForm" autocomplete="off">
+    <h2>Вхід у чат</h2>
+    <p>Оберіть нікнейм, під яким вас бачитимуть інші учасники.</p>
+    <label for="nick">Нікнейм</label>
+    <input id="nick" maxlength="24" required autofocus>
+    <div class="err" id="joinErr" role="alert"></div>
+    <button class="btn" type="submit">Увійти</button>
+  </form>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div>
+      <h1>Чат</h1>
+      <div class="me" id="meLabel"></div>
+    </div>
+
+    <div class="pulse" aria-live="off">
+      <div>
+        <div class="pulse-num"><span id="secs">–</span><small>с</small></div>
+        <div class="pulse-label">до наступного автоматичного повідомлення</div>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+
+    <div class="users-title" id="usersTitle">Учасники</div>
+    <ul class="users" id="users"></ul>
+  </aside>
+
+  <section class="main">
+    <div class="stream" id="stream" aria-live="polite">
+      <div class="empty" id="empty">Повідомлень поки немає. Напишіть першим.</div>
+    </div>
+    <div class="typing" id="typing"></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input id="text" maxlength="1000" placeholder="Напишіть повідомлення" aria-label="Повідомлення" disabled>
+      <button class="btn" id="send" type="submit" disabled>Надіслати</button>
+    </form>
+  </section>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const socket = io();
+
+  let myNick = null;
+  let interval = 15;
+  let nextAt = 0;
+  const typingNow = new Set();
+
+  $("joinForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nick = $("nick").value.trim();
+    if (nick) socket.emit("join", { nick });
+  });
+
+  socket.on("join_error", (msg) => {
+    $("joinErr").textContent = msg;
+    myNick = null;
+    $("gate").hidden = false;
+    $("nick").focus();
+  });
+
+  socket.on("joined", (data) => {
+    myNick = data.nick;
+    interval = data.interval;
+    setNext(data.next_in);
+
+    $("gate").hidden = true;
+    $("joinErr").textContent = "";
+    $("meLabel").textContent = "Ви: " + myNick;
+    $("text").disabled = false;
+    $("send").disabled = false;
+    $("text").focus();
+
+    $("stream").querySelectorAll(".msg").forEach((n) => n.remove());
+    data.history.forEach((m) => addMessage(m, false));
+    scrollDown(true);
+  });
+
+  socket.on("connect", () => {
+    $("conn").hidden = true;
+    if (myNick) socket.emit("join", { nick: myNick });
+  });
+  socket.on("disconnect", () => {
+    $("conn").hidden = false;
+    $("text").disabled = true;
+    $("send").disabled = true;
+  });
+
+  socket.on("message", (m) => {
+    if (!myNick) return;
+    addMessage(m, true);
+  });
+
+  function addMessage(m, animate) {
+    const empty = $("empty");
+    if (empty) empty.remove();
+
+    const stream = $("stream");
+    const nearBottom = stream.scrollHeight - stream.scrollTop - stream.clientHeight < 120;
+
+    const el = document.createElement("div");
+    el.className = "msg " + (m.kind === "user" && m.author === myNick ? "own" : m.kind);
+
+    if (m.kind === "system") {
+      el.textContent = `${m.text} · ${m.time}`;
+    } else {
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      if (m.kind === "auto") {
+        meta.textContent = m.time;
+      } else {
+        const b = document.createElement("b");
+        b.textContent = m.author;
+        meta.append(b, " " + m.time);
+      }
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = m.text;          // textContent — захист від XSS
+      el.append(meta, bubble);
+    }
+    stream.append(el);
+
+    if (animate && (nearBottom || m.author === myNick)) scrollDown();
+  }
+
+  function scrollDown(instant) {
+    const s = $("stream");
+    s.scrollTo({ top: s.scrollHeight, behavior: instant ? "auto" : "smooth" });
+  }
+
+  $("composer").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = $("text").value.trim();
+    if (!text) return;
+    socket.emit("message", { text });
+    socket.emit("typing", false);
+    $("text").value = "";
+    clearTimeout(typingTimer);
+    iAmTyping = false;
+  });
+
+  let iAmTyping = false, typingTimer;
+  $("text").addEventListener("input", () => {
+    if (!iAmTyping) { iAmTyping = true; socket.emit("typing", true); }
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => { iAmTyping = false; socket.emit("typing", false); }, 1500);
+  });
+
+  socket.on("typing", ({ nick, typing }) => {
+    typing ? typingNow.add(nick) : typingNow.delete(nick);
+    renderTyping();
+  });
+
+  function renderTyping() {
+    const names = [...typingNow];
+    $("typing").textContent =
+      names.length === 0 ? "" :
+      names.length === 1 ? `${names[0]} друкує…` :
+      `${names.join(", ")} друкують…`;
+    document.querySelectorAll("#users li").forEach((li) => {
+      li.querySelector(".typing-mark").textContent = typingNow.has(li.dataset.nick) ? "друкує…" : "";
+    });
+  }
+
+  socket.on("users", (list) => {
+    const ul = $("users");
+    ul.replaceChildren(...list.map((nick) => {
+      const li = document.createElement("li");
+      li.dataset.nick = nick;
+      if (nick === myNick) li.className = "me-row";
+      const dot = Object.assign(document.createElement("span"), { className: "dot" });
+      const name = Object.assign(document.createElement("span"), { className: "name", textContent: nick });
+      const mark = Object.assign(document.createElement("span"), { className: "typing-mark" });
+      li.append(dot, name, mark);
+      return li;
+    }));
+    $("usersTitle").textContent = `Учасники онлайн: ${list.length}`;
+    renderTyping();
+  });
+
+  function setNext(secondsLeft) { nextAt = Date.now() + secondsLeft * 1000; }
+  socket.on("auto_tick", (d) => { interval = d.next_in; setNext(d.next_in); });
+
+  function tick() {
+    const left = Math.max(0, nextAt - Date.now());
+    $("secs").textContent = nextAt ? Math.ceil(left / 1000) : "–";
+    $("barFill").style.transform = `scaleX(${nextAt ? left / (interval * 1000) : 1})`;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
