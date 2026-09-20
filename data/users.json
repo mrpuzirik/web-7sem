@@ -1,0 +1,16 @@
+[
+  {
+    "username": "admin",
+    "passwordHash": "$2a$10$EfcREzLowNUv/6EkwnQ9W.XZ1FcZaL37jR1NSD6cNm.xjsHMYuqca",
+    "role": "admin",
+    "createdAt": "2026-09-20T12:00:24.002Z",
+    "id": 1
+  },
+  {
+    "username": "student1",
+    "passwordHash": "$2a$10$vpXTGCP9eX56AydWXqGXm.Ned528a6Y8HFu4TFGu8kEpKkD9YhGS2",
+    "role": "user",
+    "createdAt": "2026-09-20T12:15:03.027Z",
+    "id": 2
+  }
+]
