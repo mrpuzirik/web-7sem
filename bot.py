@@ -24,10 +24,8 @@ from aiogram.types import (
 
 logging.basicConfig(level=logging.INFO)
 
-# Підтягуємо змінні з файлу .env (якщо він є) — до читання os.getenv
 load_dotenv()
 
-# ---------------------------------------------------------------- налаштування
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
@@ -43,14 +41,12 @@ SYSTEM_PROMPT = (
     "Відповідай українською, чітко і по суті, якщо користувач не просить іншої мови."
 )
 
-# ---------------------------------------------------------------- тексти кнопок
 BTN_STUDENT = "👨‍🎓 Студент"
 BTN_IT = "💻 IT-технології"
 BTN_CONTACTS = "📞 Контакти"
 BTN_AI = "🤖 Prompt AI"
 BTN_BACK = "⬅️ Назад до меню"
 
-# ---------------------------------------------------------------- розділ IT
 IT_TOPICS = {
     "python": (
         "🐍 Python",
@@ -92,7 +88,6 @@ class AIState(StatesGroup):
 router = Router()
 
 
-# ---------------------------------------------------------------- клавіатури
 def main_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -123,7 +118,6 @@ def it_back_kb() -> InlineKeyboardMarkup:
     )
 
 
-# ---------------------------------------------------------------- Groq
 FALLBACK_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
 
 
@@ -168,7 +162,6 @@ def split_text(text: str, limit: int = 4000) -> list[str]:
     return [text[i : i + limit] for i in range(0, len(text), limit)] or [""]
 
 
-# ---------------------------------------------------------------- обробники меню
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
@@ -240,7 +233,6 @@ async def contacts(message: Message, state: FSMContext):
     )
 
 
-# ---------------------------------------------------------------- Prompt AI
 @router.message(F.text == BTN_AI)
 async def ai_start(message: Message, state: FSMContext):
     await state.set_state(AIState.waiting_prompt)
@@ -279,7 +271,6 @@ async def fallback(message: Message):
     await message.answer("Оберіть пункт у меню 👇", reply_markup=main_menu())
 
 
-# ---------------------------------------------------------------- health-check
 async def start_web_server():
     """Мінімальний HTTP-сервер: потрібен хмарним сервісам (Render та ін.),
     які очікують, що застосунок слухає порт PORT."""
